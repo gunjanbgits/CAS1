@@ -19,9 +19,12 @@ float ease(float p, float g) {
 
 //--------------------------------------------------------------
 void ofApp::setup(){
-    
+        
     counterA = 0;
     counterB = 0;
+    
+    gong.load("sounds/synth.wav");
+    gong.setVolume(0.75f);
     
     juju = ofColor(255,226,170);
     
@@ -32,6 +35,7 @@ void ofApp::setup(){
     post.createPass<BloomPass>()->setEnabled(true);
     
     myFont.load("MajorMonoDisplay-Regular.ttf", 48, true, true);
+    myFontSemi.load("MajorMonoDisplay-Regular.ttf", 24, true, true);
     myFontSmall.load("SpaceMono-Regular.ttf", 10, true, true);
     
     //ofSetVerticalSync(true);
@@ -41,26 +45,6 @@ void ofApp::setup(){
     width = ofGetWidth();
     height = ofGetHeight();
     
-//    //GUI SETUP
-//    gui.setup();
-//    gui.add(camOffsetX.set("CAM offsetX", 1, 1, 640));
-//    gui.add(camOffsetY.set("CAM offsetY", 1, 1, 384));
-//    gui.add(minArea.set("Min area", 1, 1, 100));
-//    gui.add(maxArea.set("Max area", 200, 1, 500));
-//    gui.add(blurAmount.set("Blur", 5, 1, 100));
-//    gui.add(thresholdVal.set("Threshold", 168, 0, 255));
-//    gui.add(holes.set("Holes", false));
-//    gui.add(fieldOfGlow.set("RangeOfInfluence", 10, 1, 40));
-//    gui.add(proximity.set("Proximity", 1, 5, 40));
-//    
-//    
-//    // Particle GUI
-//    gui.add(timeMult.set("timeMult", .2, .005, .5));
-//    gui.add(scaleMult.set("ScaleMult", .02, .005, .5));
-//    gui.add(radius.set("Radius", .2, .1, 5));
-//    gui.add(numFrames.set("numFrames", 75, 60, 600));
-//    //gui.add(gridScale.set("gridScale", 50, 20, 80));
-//    gui.add(vScale.set("vScale", 0.04, 0.01, .5));
     
     //Load Movie
     
@@ -174,6 +158,8 @@ void ofApp::update(){
     
     contPoints.clear();
     
+    ofSoundUpdate();
+    
     // Contour FInder Setup Area !!
     
     movie.update();
@@ -219,7 +205,8 @@ void ofApp::update(){
 
 //--------------------------------------------------------------
 void ofApp::draw(){
-
+    
+    counterA++;
 
     //ofSetBackgroundAuto(showLabels);
     ofSetLineWidth(2);
@@ -257,6 +244,8 @@ void ofApp::draw(){
         createFlowField();
         drawParticles();
         if (contourFinder.size()<1){
+            playedOnce = false;
+            counterA = 0;
             ofSetColor(juju, 200);
             ofNoFill();
             ofDrawRectangle(width/2 - (gui->cropWidth+2)/2, height/2-(gui->cropHeight+2)/2 , gui->cropWidth+2, gui->cropHeight+2);
@@ -282,49 +271,59 @@ void ofApp::draw(){
                 ofTranslate((width - gui->cropWidth)/2,(height - gui->cropHeight)/2);
                 ofSetColor(118,255,208);
                 contourFinder.draw();
-                for(int i = 0; i < contourFinder.size(); i++) {
-                    ofPoint center = toOf(contourFinder.getCenter(i));  // Get Centers of the Shape
-                    contPoints.push_back(center);
-                    
-                    ofPushMatrix();
-                    ofSetColor(juju);
-                    ofTranslate(center.x, center.y);
-                    int label = contourFinder.getLabel(i);
-                    string msg = ofToString(label) + ":" + ofToString(tracker.getAge(label)) + ":" + ofToString(i);
-                    ofDrawBitmapString(msg, 0, -20);
-                    ofVec2f velocity = toOf(contourFinder.getVelocity(i));
-                    ofScale(5, 5);
-                    ofDrawLine(0, 0, velocity.x, velocity.y);
-                    ofPopMatrix();
-                    
-                    
-                    // Proximity Check
-                    
-                    float circleRadius;
-                    ofVec2f circleCenter = toOf(contourFinder.getMinEnclosingCircle(i, circleRadius));
-                    for(int j = 0; j<contourFinder.size(); j++){
-                        ofPoint centerProximity = toOf(contourFinder.getCenter(j));
+                if(counterA<60){
+                    ofSetColor(juju, 200);
+                    ofDrawRectangle(0 + ofMap(counterA, 0, 60, 0, gui->cropWidth), 0, 4, gui->cropHeight);
+                    ofDrawRectangle(0, 0 + ofMap(counterA, 0, 60, 0, gui->cropHeight), gui->cropWidth, 4);
+                    ofPoint pos;
+                    pos.x = ofMap(counterA, 0, 60, 0, gui->cropWidth);
+                    pos.y = ofMap(counterA, 0, 60, 0, gui->cropHeight);
+                    myFontSemi.drawString("Analyzing...", pos.x+20, pos.y-10);
+                    playedOnce = true;
+                }
+                else if (counterA>60){
+                    if(playedOnce){
+                        gong.play();
+                        playedOnce = false;
+                    }
+                    for(int i = 0; i < contourFinder.size(); i++) {
+                        ofPoint center = toOf(contourFinder.getCenter(i));  // Get Centers of the Shape
+                        contPoints.push_back(center);
+                        ofPushMatrix();
+                        ofSetColor(juju);
+                        ofTranslate(center.x, center.y);
+                        int label = contourFinder.getLabel(i);
+                        string msg = ofToString(label) + ":" + ofToString(tracker.getAge(label)) + ":" + ofToString(i);
+                        ofDrawBitmapString(msg, 0, -20);
+                        ofVec2f velocity = toOf(contourFinder.getVelocity(i));
+                        ofScale(5, 5);
+                        ofDrawLine(0, 0, velocity.x, velocity.y);
+                        ofPopMatrix();
+
+                        // Proximity Check
                         
-                        float circleProximityRadius;
-                        ofVec2f circleProximityCenter = toOf(contourFinder.getMinEnclosingCircle(j, circleProximityRadius));
-                        float distance = center.distance(circleProximityCenter);
-                        
-                        if(distance < circleRadius + circleProximityRadius + gui->proximity && i != j){
-                            float midX = (center.x+circleProximityCenter.x)/2;
-                            float midY = (center.y+circleProximityCenter.y)/2;
-                            ofSetColor(255,118,119);
-                            ofNoFill();
-                            ofDrawCircle(midX, midY, distance);
-                            ofSetColor(juju);
+                        float circleRadius;
+                        ofVec2f circleCenter = toOf(contourFinder.getMinEnclosingCircle(i, circleRadius));
+                        for(int j = 0; j<contourFinder.size(); j++){
+                            ofPoint centerProximity = toOf(contourFinder.getCenter(j));
+                            float circleProximityRadius;
+                            ofVec2f circleProximityCenter = toOf(contourFinder.getMinEnclosingCircle(j, circleProximityRadius));
+                            float distance = center.distance(circleProximityCenter);
+                            if(distance < circleRadius + circleProximityRadius + gui->proximity && i != j){
+                                float midX = (center.x+circleProximityCenter.x)/2;
+                                float midY = (center.y+circleProximityCenter.y)/2;
+                                ofSetColor(255,118,119);
+                                ofNoFill();
+                                ofDrawCircle(midX, midY, distance);
+                                ofSetColor(juju);
+                            }
+                        }                    //Proximity Check End
+                        ofSetColor(juju);
+                        ofPolyline shape(contPoints);
+                        ofSetLineWidth(2);
+                        shape.draw();
                         }
-                    }
-                    //Proximity Check End
-                    ofSetColor(juju);
-                    //polyline drawing;
-                    ofPolyline shape(contPoints);
-                    ofSetLineWidth(2);
-                    shape.draw();
-                    }
+                }
                 ofPopMatrix();
                 }
         post.end();
@@ -340,6 +339,7 @@ void ofApp::draw(){
     }
     
     ofDrawBitmapString(ofToString(ofGetFrameRate()), 20, 20);
+    ofDrawBitmapString("Counter A"+ofToString(counterA), 20, 40);
     //ofDrawBitmapString(ofToString(second->lol), 20, 20);
     
     

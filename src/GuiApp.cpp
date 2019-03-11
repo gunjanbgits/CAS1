@@ -16,8 +16,8 @@ void GuiApp::setup(){
     parameters.add(minArea.set("Min area", 5, 1, 100));
     parameters.add(maxArea.set("Max area", 200, 1, 500));
     parameters.add(blurAmount.set("Blur", 1, 1, 100));
-    parameters.add(thresholdVal.set("Threshold", 168, 0, 255));
-    parameters.add(holes.set("Holes", false));
+    parameters.add(thresholdVal.set("Threshold", 140, 0, 255));
+    parameters.add(holes.set("Holes", true));
     parameters.add(invert.set("invert", false));
     parameters.add(fieldOfGlow.set("RangeOfInfluence", 10, 1, 40));
     parameters.add(proximity.set("Proximity", 1, 5, 40));
@@ -37,6 +37,7 @@ void GuiApp::setup(){
     parameters.add(flagD.set("flagD", false));
     parameters.add(offsetX.set("offsetX", 0, -100, 100));
     parameters.add(offsetY.set("offsetY", 0, -100, 100));
+    parameters.add(endTime.set("timerEnd", 1000.0, 0.0, 6000.0));
     
     gui.setup(parameters);
     ofBackground(0);

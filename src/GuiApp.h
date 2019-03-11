@@ -22,7 +22,7 @@ public:
     ofParameter<bool> holes, invert;
     
     ofParameter<int> numFrames, gridScale, offsetX, offsetY;
-    ofParameter<float> timeMult, scaleMult, radius, vScale;
+    ofParameter<float> timeMult, scaleMult, radius, vScale, endTime;
     ofParameter<bool> flagA, flagB, flagC, flagD;
 
     ofxPanel gui;

@@ -30,7 +30,7 @@ class ofApp : public ofBaseApp{
         int counterA, counterB;
         ofxPostProcessing post;
     
-        ofTrueTypeFont myFont, myFontSmall;
+        ofTrueTypeFont myFont, myFontSmall, myFontSemi;
 
         ofVideoPlayer movie;
         //ofVideoGrabber movie;
@@ -57,6 +57,10 @@ class ofApp : public ofBaseApp{
         ofPoint null;
     
         int width, height, rows, cols;
+    
+        ofSoundPlayer gong;
+        bool playedOnce;
+    
 
 		
 };
