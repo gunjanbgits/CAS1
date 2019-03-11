@@ -149,7 +149,6 @@ void Particle::edges(){
 //------------------------------------------------------------------
 void Particle::draw(){
         
-    ofSetColor(255);
     ofFill();
     //ofDrawBitmapString(ofToString(testVal), pos.x, pos.y);
     ofDrawRectangle(pos.x, pos.y, scale * 5.0 , scale * 5.0);

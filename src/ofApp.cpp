@@ -22,8 +22,17 @@ void ofApp::setup(){
     
     counterA = 0;
     counterB = 0;
+    
+    juju = ofColor(255,226,170);
+    
+    modeSelector = "2";
 
-    myFont.load("GT-Zirkon-Book.ttf", 48, true, true);
+    // Setup post-processing chain
+    post.init(ofGetWidth(), ofGetHeight());
+    post.createPass<BloomPass>()->setEnabled(true);
+    
+    myFont.load("MajorMonoDisplay-Regular.ttf", 48, true, true);
+    myFontSmall.load("SpaceMono-Regular.ttf", 10, true, true);
     
     //ofSetVerticalSync(true);
     ofBackground(0);
@@ -32,34 +41,36 @@ void ofApp::setup(){
     width = ofGetWidth();
     height = ofGetHeight();
     
-    //GUI SETUP
-    gui.setup();
-    gui.add(minArea.set("Min area", 1, 1, 100));
-    gui.add(maxArea.set("Max area", 200, 1, 500));
-    gui.add(blurAmount.set("Blur", 5, 1, 100));
-    gui.add(thresholdVal.set("Threshold", 168, 0, 255));
-    gui.add(holes.set("Holes", false));
-    gui.add(fieldOfGlow.set("RangeOfInfluence", 10, 1, 40));
-    gui.add(proximity.set("Proximity", 1, 5, 40));
-    
-    
-    // Particle GUI
-    gui.add(timeMult.set("timeMult", .2, .005, .5));
-    gui.add(scaleMult.set("ScaleMult", .02, .005, .5));
-    gui.add(radius.set("Radius", .2, .1, 5));
-    gui.add(numFrames.set("numFrames", 75, 60, 600));
-    //gui.add(gridScale.set("gridScale", 50, 20, 80));
-    gui.add(vScale.set("vScale", 0.04, 0.01, .5));
+//    //GUI SETUP
+//    gui.setup();
+//    gui.add(camOffsetX.set("CAM offsetX", 1, 1, 640));
+//    gui.add(camOffsetY.set("CAM offsetY", 1, 1, 384));
+//    gui.add(minArea.set("Min area", 1, 1, 100));
+//    gui.add(maxArea.set("Max area", 200, 1, 500));
+//    gui.add(blurAmount.set("Blur", 5, 1, 100));
+//    gui.add(thresholdVal.set("Threshold", 168, 0, 255));
+//    gui.add(holes.set("Holes", false));
+//    gui.add(fieldOfGlow.set("RangeOfInfluence", 10, 1, 40));
+//    gui.add(proximity.set("Proximity", 1, 5, 40));
+//    
+//    
+//    // Particle GUI
+//    gui.add(timeMult.set("timeMult", .2, .005, .5));
+//    gui.add(scaleMult.set("ScaleMult", .02, .005, .5));
+//    gui.add(radius.set("Radius", .2, .1, 5));
+//    gui.add(numFrames.set("numFrames", 75, 60, 600));
+//    //gui.add(gridScale.set("gridScale", 50, 20, 80));
+//    gui.add(vScale.set("vScale", 0.04, 0.01, .5));
     
     //Load Movie
     
-    //    movie.load("keys2.mov");
-    //    movie.play();
+        movie.load("juju1.mov");
+        movie.play();
     
     //CAM FEED
     
-    movie.setDeviceID(1);
-    movie.setup(1280, 768);
+//    movie.setDeviceID(1);
+//    movie.setup(1280, 768);
     
     contourFinder.setMinAreaRadius(1);
     contourFinder.setMaxAreaRadius(100);
@@ -110,14 +121,14 @@ void ofApp::resetParticles(){
 void ofApp::createFlowField(){
     
     // Flow Field Setup Area !!
-    float t = timeMult*ofGetFrameNum()/numFrames;
+    float t = gui->timeMult*ofGetFrameNum()/gui->numFrames;
     //int t = 1;
     for (int y = 0; y < rows; y++){
         for (int x = 0; x < cols; x++){
             int index = x + y * cols;
 
-            float nsFactor2 = ofMap(ofNoise(scaleMult*x,scaleMult*y,radius*cos(TWO_PI*t),radius*sin(TWO_PI*t)),0,1,-25,25);
-            float nsFactor2a = ofMap(ofNoise(200+scaleMult*x,scaleMult*y,radius*cos(TWO_PI*t),radius*sin(TWO_PI*t)),0,1,0,1);
+            float nsFactor2 = ofMap(ofNoise(gui->scaleMult*x,gui->scaleMult*y,gui->radius*cos(TWO_PI*t),gui->radius*sin(TWO_PI*t)),0,1,-25,25);
+            float nsFactor2a = ofMap(ofNoise(200+gui->scaleMult*x,gui->scaleMult*y,gui->radius*cos(TWO_PI*t),gui->radius*sin(TWO_PI*t)),0,1,0,1);
             float l = glm::sqrt(glm::pow(20,2)+glm::pow(20,2));
             float vx = l*cos(nsFactor2);
             float vy = l*sin(nsFactor2);
@@ -127,12 +138,12 @@ void ofApp::createFlowField(){
             ofPoint flow;
             flow.x = vx;
             flow.y = vy;
-            flow.limit(vScale);
+            flow.limit(gui->vScale);
             //flow.normalize();
             flowField[index] = flow;
             ofPushMatrix();
             ofTranslate(x+x*20, y+y*20);
-            ofSetColor(25);
+            ofSetColor(juju,85);
             ofDrawLine(0,0,vx,vy);
             ofPopMatrix();
         }
@@ -145,11 +156,11 @@ void ofApp::createFlowField(){
 
 void ofApp::drawParticles(){
     
-    ofSetColor(127, 127);
+    ofSetColor(juju);
     
     for(unsigned int i = 0; i < p.size(); i++){
         
-        if(flowFieldFlag){
+        if(gui->flagA){
             p[i].follow(flowField, 40, cols);
         }
         p[i].update();
@@ -167,23 +178,29 @@ void ofApp::update(){
     
     movie.update();
     if(movie.isFrameNew()) {
-        blur(movie, blurAmount);
+        blur(movie, gui->blurAmount);
+        
+        cropSample = movie.getPixels();
+        cropSample.crop(gui->camOffsetX, gui->camOffsetY, gui->cropWidth, gui->cropHeight);
+        
+        if (gui->invert){
         invert(movie);
-        contourFinder.setMinAreaRadius(minArea);
-        contourFinder.setMaxAreaRadius(maxArea);
-        contourFinder.setThreshold(thresholdVal);
-        contourFinder.findContours(movie);
+        }
+        contourFinder.setMinAreaRadius(gui->minArea);
+        contourFinder.setMaxAreaRadius(gui->maxArea);
+        contourFinder.setThreshold(gui->thresholdVal);
+        contourFinder.findContours(cropSample);
         contourFinder.setSortBySize(true);
         contourFinder.setSimplify(true);
-        contourFinder.setFindHoles(holes);
+        contourFinder.setFindHoles(gui->holes);
         
         if(modeSelector == "0"){
             ofxCv::copy(movie, imgBlur);
-            blur(imgBlur, blurAmount);
+            blur(imgBlur, gui->blurAmount);
             imgBlur.update();
             
             convertColor(imgBlur, imgThresh, CV_RGB2GRAY);
-            threshold(imgThresh, thresholdVal);
+            threshold(imgThresh, gui->thresholdVal);
             imgThresh.update();
             
             ofxCv::copy(imgThresh, imgInvert);
@@ -204,73 +221,73 @@ void ofApp::update(){
 void ofApp::draw(){
 
 
-    ofSetBackgroundAuto(showLabels);
+    //ofSetBackgroundAuto(showLabels);
+    ofSetLineWidth(2);
     RectTracker& tracker = contourFinder.getTracker();
     
-    float t1 = timeMult*10*ofGetFrameNum()/numFrames;
+    float t1 = gui->timeMult*10*ofGetFrameNum()/gui->numFrames;
+    float t2 = gui->timeMult*10*ofGetFrameNum()/gui->numFrames;
+    float animColor = ofMap(sin(t2), -1, 1, 127, 255);
+    float animSize = ofMap(sin(t2), -1, 1, 0, 100);
     
     if(modeSelector == "0"){
         ofBackground(0);
-        movie.draw(0,0,640,400);
+        cropSample.draw(0,0,640,400);
         imgBlur.draw(640,0,640,400);
         imgThresh.draw(0,400,640,400);
         imgInvert.draw(640,400,640,400);
+        
+//        ofBackground(0);
+//        ofSetColor(juju);
+//        createFlowField();
+//        drawParticles();
         
     }
     
     else if(modeSelector == "2"){
         ofBackground(0);
-        movie.draw(0,0);
+        cropSample.draw((width - gui->cropWidth)/2,(height - gui->cropHeight)/2);
+        //movie.getTexture().drawSubsection(width/2-320, height/2-180, 640, 360, camOffsetX, camOffsetY, 640, 360);
     }
     
     else if(modeSelector == "1"){
-        
         ofBackground(0);
+        post.begin();
+        ofSetColor(juju);
         createFlowField();
         drawParticles();
-        ofSetColor(255);
-        contourFinder.draw();
         if (contourFinder.size()<1){
-            ofSetColor(0);
-            //ofDrawRectangle(width/4, height/2, width/2, height/6);
-            ofSetColor(255);
-            myFont.drawString("JUJU",width/2-60, height/2);
-            flowFieldFlag = !flowFieldFlag;
-            transitionA = false;
-            stateA = false;
-            stateB = false;
+            ofSetColor(juju, 200);
+            ofNoFill();
+            ofDrawRectangle(width/2 - (gui->cropWidth+2)/2, height/2-(gui->cropHeight+2)/2 , gui->cropWidth+2, gui->cropHeight+2);
+            ofSetColor(0,200);
+            ofFill();
+            ofDrawRectangle(width/2 - gui->cropWidth/2, height/2-gui->cropHeight/2 , gui->cropWidth, gui->cropHeight);
+            string msg = "juju";
+            ofSetColor(juju);
+            myFont.drawString(msg,width/2-myFont.stringWidth(msg)/2, height/2-myFont.stringHeight(msg)/2+40);
+            string msg2 = "PLACE JUJU CARD HERE";
+            ofSetColor(juju, animColor);
+            myFontSmall.setLetterSpacing(1.8);
+            myFontSmall.drawString(msg2,width/2-myFontSmall.stringWidth(msg2)/2, height/2-myFontSmall.stringHeight(msg2)/2+60);
         }
-        else if(contourFinder.size()>5){
-            transitionA = true;
-        }
-        
-        if(transitionA){
-            myFont.drawString("Analyzing your Juju...", 20, 100);
-            if(counterA>400){
-                transitionA = false;
-                stateA = true;
-                counterA = 0;
-            }
-            else{
-            counterA++;
-            }
-            vScale.set("vScale", 0.1, 0.01, .5);
-        }
-        
-        if(stateA){
-            if (counterB>300){
-                stateA = false;
-                stateB = true;
-                counterB = 0;
-            }
-            else {
-                counterB++;
-                vScale.set("vScale", 0.2, 0.01, .5);
+        else if(contourFinder.size()>1){
+                ofSetColor(juju, 200);
+                ofNoFill();
+                ofDrawRectangle(width/2 - (gui->cropWidth+2)/2, height/2-(gui->cropHeight+2)/2 , gui->cropWidth+2, gui->cropHeight+2);
+                ofSetColor(0,200);
+                ofFill();
+                ofDrawRectangle(width/2 - gui->cropWidth/2, height/2-gui->cropHeight/2 , gui->cropWidth, gui->cropHeight);
+                ofPushMatrix();
+                ofTranslate((width - gui->cropWidth)/2,(height - gui->cropHeight)/2);
+                ofSetColor(118,255,208);
+                contourFinder.draw();
                 for(int i = 0; i < contourFinder.size(); i++) {
                     ofPoint center = toOf(contourFinder.getCenter(i));  // Get Centers of the Shape
                     contPoints.push_back(center);
                     
                     ofPushMatrix();
+                    ofSetColor(juju);
                     ofTranslate(center.x, center.y);
                     int label = contourFinder.getLabel(i);
                     string msg = ofToString(label) + ":" + ofToString(tracker.getAge(label)) + ":" + ofToString(i);
@@ -279,6 +296,8 @@ void ofApp::draw(){
                     ofScale(5, 5);
                     ofDrawLine(0, 0, velocity.x, velocity.y);
                     ofPopMatrix();
+                    
+                    
                     // Proximity Check
                     
                     float circleRadius;
@@ -290,29 +309,28 @@ void ofApp::draw(){
                         ofVec2f circleProximityCenter = toOf(contourFinder.getMinEnclosingCircle(j, circleProximityRadius));
                         float distance = center.distance(circleProximityCenter);
                         
-                        if(distance < circleRadius + circleProximityRadius + proximity && i != j){
+                        if(distance < circleRadius + circleProximityRadius + gui->proximity && i != j){
                             float midX = (center.x+circleProximityCenter.x)/2;
                             float midY = (center.y+circleProximityCenter.y)/2;
                             ofSetColor(255,118,119);
                             ofNoFill();
                             ofDrawCircle(midX, midY, distance);
-                            ofSetColor(255);
+                            ofSetColor(juju);
                         }
                     }
                     //Proximity Check End
-                    ofSetColor(255);
+                    ofSetColor(juju);
                     //polyline drawing;
                     ofPolyline shape(contPoints);
                     ofSetLineWidth(2);
                     shape.draw();
                     }
+                ofPopMatrix();
                 }
-            }
+        post.end();
         
-        if(stateB){
-            myFont.drawString("Your high-minded principles spell success", 20, 180);
-            vScale.set("vScale", 0.01, 0.01, .5);
-        }
+
+        
         
     
     attractPointsWithMovement.clear();
@@ -322,15 +340,16 @@ void ofApp::draw(){
     }
     
     ofDrawBitmapString(ofToString(ofGetFrameRate()), 20, 20);
-    ofDrawBitmapString(ofToString(contPoints), 20, 40);
+    //ofDrawBitmapString(ofToString(second->lol), 20, 20);
     
     
-        // Gui Draw
-        if(guiFlag){
-            gui.draw();
-        }
         
     }
+    
+//    // Gui Draw
+//    if(guiFlag){
+//        gui.draw();
+//    }
     
 }
 

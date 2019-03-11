@@ -3,7 +3,10 @@
 #include "ofMain.h"
 #include "ofxCv.h"
 #include "ofxGui.h"
+#include "GuiApp.h"
+//#include "SecondApp.h"
 #include "particle.h"
+#include "ofxPostProcessing.h"
 
 using namespace ofxCv;
 using namespace cv;
@@ -15,6 +18,9 @@ class ofApp : public ofBaseApp{
 		void update();
 		void draw();
     
+        shared_ptr < GuiApp > gui;
+        //shared_ptr < SecondApp > second;
+    
         void resetParticles();
         void createFlowField();
         void drawParticles();
@@ -22,13 +28,16 @@ class ofApp : public ofBaseApp{
 		void keyPressed(int key);
     
         int counterA, counterB;
+        ofxPostProcessing post;
     
-        ofTrueTypeFont myFont;
+        ofTrueTypeFont myFont, myFontSmall;
 
-        //ofVideoPlayer movie;
-        ofVideoGrabber movie;
+        ofVideoPlayer movie;
+        //ofVideoGrabber movie;
     
-        ofImage imgThresh, imgBlur, imgInvert;
+        ofColor juju;
+    
+        ofImage imgThresh, imgBlur, imgInvert, cropSample;
     
         ofxCv::ContourFinder contourFinder;
         vector< vector<cv::Point> > quads;
@@ -36,12 +45,6 @@ class ofApp : public ofBaseApp{
         bool showLabels, guiFlag, flowFieldFlag, transitionA, transitionB, stateA, stateB;
         vector <glm::vec3> contPoints;
         string modeSelector;
-    
-    
-        ofxPanel gui;
-        ofParameter<float> minArea, maxArea, thresholdVal, fieldOfGlow, proximity;
-        ofParameter<int> blurAmount;
-        ofParameter<bool> holes;
 
     
         //  Particle Setup
@@ -54,9 +57,6 @@ class ofApp : public ofBaseApp{
         ofPoint null;
     
         int width, height, rows, cols;
-    
-        ofParameter<int> numFrames, gridScale;
-        ofParameter<float> timeMult, scaleMult, radius, vScale;
 
 		
 };
