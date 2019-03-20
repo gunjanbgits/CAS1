@@ -15,6 +15,17 @@ void SecondApp::setup(){
     ofSetLogLevel(OF_LOG_VERBOSE);
     ofSetFrameRate(20); // generating a character per frame at 60fps is too fast to read in realtime! so reducing this to 20 as ghetto way of limiting the rate
     
+    jujuBG.load("jujubg.png");
+    myFontResult.load("SpaceMono-Regular.ttf", 18, true, true);
+    fontLogo.load("MajorMonoDisplay-Regular.ttf", 84, true, true);
+    jujuScore.load("MajorMonoDisplay-Regular.ttf", 44, true, true);
+    
+    heightS = ofGetHeight();
+    widthS = ofGetWidth();
+    
+    // Setup post-processing chain
+    postS.init(ofGetWidth(), ofGetHeight());
+    postS.createPass<BloomPass>()->setEnabled(true);
     
     // scan models dir
     models_dir.listDir("models");
@@ -139,52 +150,121 @@ void SecondApp::update(){
 
 void SecondApp::draw(){
     //ofDrawCircle(100, 100, gui2->radius+100);
-    ofDrawBitmapString(ofToString(main->contPoints), 20, 20);
+    postS.begin();
     
-    stringstream str;
-    str << ofGetFrameRate() << endl;
-    str << endl;
-    str << "ENTER : toggle auto run " << (do_auto_run ? "(X)" : "( )") << endl;
-    str << "RIGHT : sample one char " << endl;
-    str << "DEL   : clear text " << endl;
-    str << endl;
+    ofSetColor(main->juju);
     
-    str << "Press number key to load model: " << endl;
-    for(int i=0; i<models_dir.size(); i++) {
-        auto marker = (i==cur_model_index) ? ">" : " ";
-        str << " " << (i+1) << " : " << marker << " " << models_dir.getName(i) << endl;
-    }
-    
-    str << endl;
-    str << "Any other key to type," << endl;
-    str << "(and prime the model accordingly)" << endl;
-    str << endl;
-    
-    
-    if(session) {
-        // sample one character from probability distribution
-        int cur_char_index = msa::tf::sample_from_prob(rng, last_model_output);
-        char cur_char = int_to_char[cur_char_index];
-        
-        str << "Next char : " << cur_char_index << " | " << cur_char << endl;
-        
-        if(do_auto_run || do_run_once) {
-            if(do_run_once) do_run_once = false;
+    if(main->jujuStart){
+        jujuBG.draw(0,0);
+        myFontResult.drawString("Calculating JUJU . . . ", 70, 1640);
+        if(main->jujuTwo){
+            ofSetColor(0);
+            ofDrawRectangle(60, 1600, 100, 100);
+            ofSetColor(main->juju);
+            do_auto_run = true;
+            jujuBG.draw(0,0);
+            ofDrawBitmapString(ofToString(main->contPoints), 20, 20);
             
-            add_char(cur_char);
+            stringstream str;
+            str << ofGetFrameRate() << endl;
+            str << endl;
+            str << "ENTER : toggle auto run " << (do_auto_run ? "(X)" : "( )") << endl;
+            str << "RIGHT : sample one char " << endl;
+            str << "DEL   : clear text " << endl;
+            str << endl;
+            
+            str << "Press number key to load model: " << endl;
+            for(int i=0; i<models_dir.size(); i++) {
+                auto marker = (i==cur_model_index) ? ">" : " ";
+                str << " " << (i+1) << " : " << marker << " " << models_dir.getName(i) << endl;
+            }
+            
+            str << endl;
+            str << "Any other key to type," << endl;
+            str << "(and prime the model accordingly)" << endl;
+            str << endl;
+            
+            
+            if(session) {
+                // sample one character from probability distribution
+                int cur_char_index = msa::tf::sample_from_prob(rng, last_model_output);
+                char cur_char = int_to_char[cur_char_index];
+                
+                str << "Next char : " << cur_char_index << " | " << cur_char << endl;
+                
+                if(do_auto_run || do_run_once) {
+                    if(do_run_once) do_run_once = false;
+                    
+                    add_char(cur_char);
+                }
+            }
+            
+            // display probability histogram
+            //msa::tf::draw_probs(last_model_output, ofRectangle(0, 0, ofGetWidth(), ofGetHeight()));
+            
+            
+            // draw texts
+            ofSetColor(main->juju);
+            //ofDrawBitmapString(str.str(), 20, 20);
+            
+            myFontResult.setLetterSpacing(1);
+            ofSetColor(main->juju);
+            myFontResult.drawString(text_full + "_", 70, 1620);
         }
+            
+            //ofDrawBitmapString(ofToString(main->contPoints) + "_", 360, 20);
+            //main->cropSample.draw();
+            ofPolyline connections(main->contPoints);
+            ofDrawBitmapString(ofToString(main->contPoints), 80, 1400);
+            ofDrawBitmapString(ofToString(main->contPoints), 80, 1420);
+            ofDrawBitmapString(ofToString(main->contPoints), 80, 1440);
+        
+            jujuScore.drawString("juju level:" + ofToString(main->score - 10000), 70, 1555);
+
+        for(int j = 0; j<20; j++){
+                    ofPushMatrix();
+                    ofScale(4-0.15*j);
+                    ofSetLineWidth(5);
+                    ofSetColor(main->juju,255-j*10);
+                    ofTranslate(gui2->offsetX,gui2->offsetY+40*j);
+                    ofRotateXDeg(gui2->rotate*j+0);
+                        connections.draw();
+                        for(int i = 0; i< main->contPoints.size(); i++){
+                            ofDrawCircle(main->contPoints[i].x, main->contPoints[i].y, 2);
+                        }
+                    ofPopMatrix();
+        }
+        
     }
     
-    // display probability histogram
-    //msa::tf::draw_probs(last_model_output, ofRectangle(0, 0, ofGetWidth(), ofGetHeight()));
+    else if(main->jujuOne){
+        do_auto_run = false;
+        ofSetColor(main->juju, 180);
+        string logo = "JUJU";
+        fontLogo.drawString(logo,widthS/2-fontLogo.stringWidth(logo)/2, heightS/2-fontLogo.stringHeight(logo)/2+40);
+        ofSetColor(main->juju);
+        string msg2 = "PLACE JUJU CARD TO BEGIN ANALYSIS";
+        myFontResult.setLetterSpacing(1.8);
+        myFontResult.drawString(msg2,widthS/2-myFontResult.stringWidth(msg2)/2, heightS/2-myFontResult.stringHeight(msg2)/2+80);
+        string msg3 = "ANALYZING...";
+        myFontResult.setLetterSpacing(1.8);
+        myFontResult.drawString(msg3,widthS/2-myFontResult.stringWidth(msg3)/2, heightS/2-myFontResult.stringHeight(msg3)/2+180);
+        text_lines = { "_" };
+    }
     
+    else{
+        do_auto_run = false;
+        ofSetColor(main->juju, 180);
+        string logo = "JUJU";
+        fontLogo.drawString(logo,widthS/2-fontLogo.stringWidth(logo)/2, heightS/2-fontLogo.stringHeight(logo)/2+40);
+        ofSetColor(main->juju);
+        string msg2 = "PLACE JUJU CARD TO BEGIN ANALYSIS";
+        myFontResult.setLetterSpacing(1.8);
+        myFontResult.drawString(msg2,widthS/2-myFontResult.stringWidth(msg2)/2, heightS/2-myFontResult.stringHeight(msg2)/2+80);
+        text_lines = { "_" };
+    }
+    postS.end();
     
-    // draw texts
-    ofSetColor(150);
-    ofDrawBitmapString(str.str(), 20, 20);
-    
-    ofSetColor(0, 200, 0);
-    ofDrawBitmapString(text_full + "_", 320, 10);
 }
 
 

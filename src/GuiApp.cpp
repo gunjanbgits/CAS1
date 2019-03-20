@@ -9,10 +9,10 @@
 
 void GuiApp::setup(){
     //GUI SETUP
-    parameters.add(camOffsetX.set("CAM offsetX", 310, 1, 640));
-    parameters.add(camOffsetY.set("CAM offsetY", 200, 1, 384));
-    parameters.add(cropHeight.set("Crop Height", 340, 1, 1280));
-    parameters.add(cropWidth.set("Crop Width", 580, 1, 800));
+    parameters.add(camOffsetX.set("CAM offsetX", 425, 1, 640));
+    parameters.add(camOffsetY.set("CAM offsetY", 285, 1, 384));
+    parameters.add(cropHeight.set("Crop Height", 222, 1, 1280));
+    parameters.add(cropWidth.set("Crop Width", 349, 1, 800));
     parameters.add(minArea.set("Min area", 5, 1, 100));
     parameters.add(maxArea.set("Max area", 200, 1, 500));
     parameters.add(blurAmount.set("Blur", 1, 1, 100));
@@ -35,8 +35,10 @@ void GuiApp::setup(){
     parameters.add(flagB.set("flagB", false));
     parameters.add(flagC.set("flagC", false));
     parameters.add(flagD.set("flagD", false));
-    parameters.add(offsetX.set("offsetX", 0, -100, 100));
-    parameters.add(offsetY.set("offsetY", 0, -100, 100));
+    parameters.add(offsetX.set("offsetX", 0, -1000, 1000));
+    parameters.add(offsetY.set("offsetY", 0, -1000, 1000));
+    parameters.add(rotate.set("rotate", 0, 0, 100));
+    
     parameters.add(endTime.set("timerEnd", 1000.0, 0.0, 6000.0));
     
     gui.setup(parameters);
@@ -50,4 +52,5 @@ void GuiApp::update(){
 
 void GuiApp::draw(){
     gui.draw();
+    //main->movie.draw(0,0);
 }

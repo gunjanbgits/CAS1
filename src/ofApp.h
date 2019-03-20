@@ -1,9 +1,9 @@
 #pragma once
 
 #include "ofMain.h"
+#include "GuiApp.h"
 #include "ofxCv.h"
 #include "ofxGui.h"
-#include "GuiApp.h"
 //#include "SecondApp.h"
 #include "particle.h"
 #include "ofxPostProcessing.h"
@@ -18,7 +18,7 @@ class ofApp : public ofBaseApp{
 		void update();
 		void draw();
     
-        shared_ptr < GuiApp > gui;
+        shared_ptr<GuiApp> gui;
         //shared_ptr < SecondApp > second;
     
         void resetParticles();
@@ -32,8 +32,8 @@ class ofApp : public ofBaseApp{
     
         ofTrueTypeFont myFont, myFontSmall, myFontSemi;
 
-        ofVideoPlayer movie;
-        //ofVideoGrabber movie;
+        //ofVideoPlayer movie;
+        ofVideoGrabber movie;
     
         ofColor juju;
     
@@ -54,12 +54,14 @@ class ofApp : public ofBaseApp{
     
         vector <ofPoint> flowField;
     
+        float score;
+    
         ofPoint null;
     
         int width, height, rows, cols;
     
         ofSoundPlayer gong;
-        bool playedOnce;
+        bool playedOnce, jujuStart, jujuOne, jujuTwo;
     
 
 		

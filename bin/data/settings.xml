@@ -1,0 +1,27 @@
+<?xml version="1.0"?>
+<group>
+	<CAM_offsetX>493</CAM_offsetX>
+	<CAM_offsetY>362</CAM_offsetY>
+	<Crop_Height>244</Crop_Height>
+	<Crop_Width>404</Crop_Width>
+	<Min_area>5</Min_area>
+	<Max_area>200</Max_area>
+	<Blur>1</Blur>
+	<Threshold>173.4</Threshold>
+	<Holes>1</Holes>
+	<invert>0</invert>
+	<RangeOfInfluence>10</RangeOfInfluence>
+	<Proximity>1</Proximity>
+	<timeMult>0.2</timeMult>
+	<ScaleMult>0.02</ScaleMult>
+	<Radius>0.2</Radius>
+	<numFrames>75</numFrames>
+	<vScale>0.04</vScale>
+	<flagA>1</flagA>
+	<flagB>0</flagB>
+	<flagC>0</flagC>
+	<flagD>0</flagD>
+	<offsetX>0</offsetX>
+	<offsetY>0</offsetY>
+	<timerEnd>1000</timerEnd>
+</group>

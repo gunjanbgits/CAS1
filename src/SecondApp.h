@@ -11,6 +11,7 @@
 #include "GuiApp.h"
 #include "ofApp.h"
 #include "ofxMSATensorFlow.h"
+#include "ofxPostProcessing.h"
 
 class SecondApp: public ofBaseApp {
 public:
@@ -18,7 +19,10 @@ public:
     void update();
     void draw();
     
-    int lol;
+    int lol, heightS, widthS;
+    ofImage jujuBG;
+    ofTrueTypeFont myFontResult, fontLogo, jujuScore;
+    ofxPostProcessing postS;
     
     shared_ptr<GuiApp> gui2;
     shared_ptr<ofApp> main;
@@ -45,8 +49,8 @@ public:
     // managing word wrap in very ghetto way
     string text_full;
     list<string> text_lines = { "The" };
-    int max_line_width = 120;
-    int max_line_num = 50;
+    int max_line_width = 60;
+    int max_line_num = 6;
     
     
     // model file management
